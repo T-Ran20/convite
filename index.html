@@ -543,11 +543,6 @@ function editMyRsvp(){
   if(!n||!tok)return;
   const g=getGuests().find(x=>x.name===n&&x.token===tok);
   if(!g){alert('Não foi possível verificar sua identidade. Por segurança, a edição foi bloqueada.');return;}
-  const phone8=g.phone?g.phone.replace(/\D/g,'').slice(-8):'';
-  if(phone8){
-    const digitado=(prompt('Para editar sua confirmação, informe os últimos 8 dígitos do seu WhatsApp:')||'').replace(/\D/g,'').slice(-8);
-    if(digitado!==phone8){alert('Número incorreto. Edição bloqueada por segurança.');return;}
-  }
   localStorage.setItem('elise_editing','1');
   document.getElementById('gname').value=g.name;document.getElementById('gphone').value=g.phone||'';
   const sel=g.count>=4?'4+':String(g.count);document.getElementById('gcount').value=sel;
@@ -563,11 +558,6 @@ function cancelRsvp(){
   if(!n||!tok)return;
   const entry=getGuests().find(x=>x.name===n&&x.token===tok);
   if(!entry){alert('Não foi possível verificar sua identidade. Por segurança, o cancelamento foi bloqueado.');return;}
-  const phone8=entry.phone?entry.phone.replace(/\D/g,'').slice(-8):'';
-  if(phone8){
-    const digitado=(prompt('Para cancelar sua confirmação, informe os últimos 8 dígitos do seu WhatsApp:')||'').replace(/\D/g,'').slice(-8);
-    if(digitado!==phone8){alert('Número incorreto. Cancelamento bloqueado por segurança.');return;}
-  }
   if(!confirm('Deseja cancelar sua confirmação de presença?'))return;
   let g=getGuests();
   const removed=g.find(x=>x.name===n);
