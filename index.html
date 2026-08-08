@@ -361,6 +361,9 @@ for(let i=0;i<34;i++)ptls.push(mkP(false));
 const envEl=document.getElementById('env'),invEl=document.getElementById('invite');
 const fab=document.getElementById('scroll-fab');
 
+// Tenta reenviar pendentes ao abrir a página
+reenviarPendentes();
+
 function openInvite(){
   envEl.classList.add('gone');
   invEl.classList.remove('hidden');
@@ -414,15 +417,66 @@ function saveGuests(g){localStorage.setItem(GKEY,JSON.stringify(g))}
 function getCancelled(){return JSON.parse(localStorage.getItem(CKEY)||'[]')}
 function saveCancelled(c){localStorage.setItem(CKEY,JSON.stringify(c))}
 function getMyName(){return localStorage.getItem('elise_myname')||null}
+function getMyToken(){return localStorage.getItem('elise_token')||null}
+/* Gera token único de 32 chars aleatórios — salvo só no dispositivo de quem confirmou */
+function gerarToken(){
+  const arr=new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 const SHEET_URL='https://script.google.com/macros/s/AKfycbxOtqHa5EXwsWCguaytONfL52Mt5W2a90eOzN8dl0VZT8PZ60-wbLHta-8CjgFq-6HL/exec';
-async function sendToSheet(data){try{await fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})}catch(e){}}
+async function sendToSheet(data,tentativas=0){
+  const MAX=3,ESPERA=3000;
+  try{
+    // Envia via GET com dados em JSON na URL — permite ler a resposta (sem bloqueio CORS)
+    const params=new URLSearchParams({payload:JSON.stringify(data)});
+    const res=await fetch(SHEET_URL+'?'+params.toString(),{method:'GET'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    if(json.error)throw new Error(json.error);
+    // Limpa fila pendente se existia
+    localStorage.removeItem('elise_pending');
+    return {ok:true};
+  }catch(e){
+    if(tentativas<MAX-1){
+      // Aguarda e tenta de novo
+      await new Promise(r=>setTimeout(r,ESPERA));
+      return sendToSheet(data,tentativas+1);
+    }
+    // Após 3 falhas: salva localmente para não perder
+    const pending=JSON.parse(localStorage.getItem('elise_pending')||'[]');
+    pending.push({...data,_savedAt:new Date().toISOString()});
+    localStorage.setItem('elise_pending',JSON.stringify(pending));
+    return {ok:false,err:e.message};
+  }
+}
+
+// Tenta reenviar confirmações pendentes (chama ao abrir a página)
+async function reenviarPendentes(){
+  const pending=JSON.parse(localStorage.getItem('elise_pending')||'[]');
+  if(!pending.length)return;
+  for(const item of pending){
+    const r=await sendToSheet(item);
+    if(r.ok){
+      // Remove da fila após sucesso
+      const atual=JSON.parse(localStorage.getItem('elise_pending')||'[]');
+      localStorage.setItem('elise_pending',JSON.stringify(atual.filter(x=>x._savedAt!==item._savedAt)));
+    }
+  }
+}
 
 /* RSVP */
 function toggleExact(){document.getElementById('exact-g').style.display=document.getElementById('gcount').value==='4+'?'flex':'none'}
 function onlyL(s){return/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(s)}
 function onlyN(s){return/^[0-9]+$/.test(s)}
 function setErr(inp,err,show,msg){document.getElementById(inp).classList.toggle('err',show);const e=document.getElementById(err);if(msg)e.textContent=msg;e.classList.toggle('show',show)}
-function checkAlreadyConfirmed(){const n=getMyName();if(!n)return;const me=getGuests().find(g=>g.name===n);if(me)showSuccess(me)}
+function checkAlreadyConfirmed(){
+  const n=getMyName();
+  const tok=getMyToken();
+  if(!n||!tok)return;
+  const me=getGuests().find(g=>g.name===n&&g.token===tok);
+  if(me)showSuccess(me);
+}
 function showSuccess(g){document.getElementById('rsvp-form').style.display='none';document.getElementById('rsvp-ok').classList.add('show');const pax=Number(g.count);document.getElementById('smsg').textContent=`${g.name}, ficamos felizes! `+(pax===1?'Esperamos por você no evento 🌸':`Esperamos por ${pax} pessoas no evento 🌸`)+(g.msg?' Seu recadinho chegou com muito carinho 💕':'')}
 
 document.getElementById('btn-ok').addEventListener('click',async()=>{
@@ -441,30 +495,60 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
   const pax=count==='4+'?parseInt(exact):parseInt(count);
   let guests=getGuests();
   if(isEdit&&origName){
-    const idx=guests.findIndex(g=>g.name===origName);
-    const old=idx>=0?guests[idx]:{time:new Date().toLocaleString('pt-BR')};
+    const myTok=getMyToken();
+    const idx=guests.findIndex(g=>g.name===origName&&g.token===myTok);
+    if(idx===-1){
+      alert('Não foi possível verificar sua identidade. Por segurança, a edição foi bloqueada.');
+      localStorage.removeItem('elise_editing');
+      document.getElementById('btn-ok').textContent='Confirmar Presença 💕';
+      return;
+    }
+    const old=guests[idx];
     const entry={...old,name,phone,count:pax,msg,edited:true,editedAt:new Date().toLocaleString('pt-BR')};
-    if(idx>=0)guests[idx]=entry;else guests.push(entry);
+    guests[idx]=entry;
     saveGuests(guests);localStorage.setItem('elise_myname',name);localStorage.removeItem('elise_editing');
     document.getElementById('btn-ok').textContent='Confirmar Presença 💕';
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
-    btn.disabled=true;st.textContent='Salvando…';await sendToSheet({...entry,_action:'edit',_origName:origName});btn.disabled=false;st.textContent='';
+    btn.disabled=true;st.textContent='Salvando… 🌸';
+    const res=await sendToSheet({...entry,_action:'edit',_origName:origName});
+    btn.disabled=false;st.textContent='';
+    if(!res.ok){st.style.color='#C0392B';st.textContent='⚠️ Conexão instável — alteração salva localmente e será enviada quando a internet voltar.';setTimeout(()=>{st.textContent='';st.style.color=''},6000);}
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
     setTimeout(()=>{f.style.display='none';showSuccess(entry)},400);
   }else{
     if(guests.find(g=>g.name.toLowerCase()===name.toLowerCase())){alert('Você já confirmou presença! 🌸');return}
-    const entry={name,phone,count:pax,msg,time:new Date().toLocaleString('pt-BR'),edited:false};
-    guests.push(entry);saveGuests(guests);localStorage.setItem('elise_myname',name);
+    const token=gerarToken();
+    const entry={name,phone,count:pax,msg,time:new Date().toLocaleString('pt-BR'),edited:false,token};
+    guests.push(entry);saveGuests(guests);
+    localStorage.setItem('elise_myname',name);
+    localStorage.setItem('elise_token',token);
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
-    btn.disabled=true;st.textContent='Enviando…';await sendToSheet({...entry,_action:'new'});btn.disabled=false;st.textContent='';
+    btn.disabled=true;st.textContent='Enviando… 🌸';
+    const res=await sendToSheet({...entry,_action:'new'});
+    btn.disabled=false;st.textContent='';
+    if(!res.ok){
+      // Avisa a convidada mas não bloqueia — dado já salvo localmente
+      st.style.color='#C0392B';
+      st.textContent='⚠️ Conexão instável — sua confirmação foi salva e será enviada automaticamente quando a internet voltar.';
+      setTimeout(()=>{st.textContent='';st.style.color=''},6000);
+    }
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
     setTimeout(()=>{f.style.display='none';showSuccess(entry)},400);
   }
 });
 
 function editMyRsvp(){
-  const n=getMyName();if(!n)return;
-  const g=getGuests().find(x=>x.name===n);if(!g)return;
+  const n=getMyName();
+  const tok=getMyToken();
+  if(!n||!tok)return;
+  // Valida token E últimos 8 dígitos do telefone
+  const g=getGuests().find(x=>x.name===n&&x.token===tok);
+  if(!g){alert('Não foi possível verificar sua identidade. Por segurança, a edição foi bloqueada.');return;}
+  const phone8=g.phone?g.phone.replace(/\D/g,'').slice(-8):'';
+  if(phone8){
+    const digitado=(prompt('Para editar sua confirmação, informe os últimos 8 dígitos do seu WhatsApp:')||'').replace(/\D/g,'').slice(-8);
+    if(digitado!==phone8){alert('Número incorreto. Edição bloqueada por segurança.');return;}
+  }
   localStorage.setItem('elise_editing','1');
   document.getElementById('gname').value=g.name;document.getElementById('gphone').value=g.phone||'';
   const sel=g.count>=4?'4+':String(g.count);document.getElementById('gcount').value=sel;
@@ -476,7 +560,17 @@ function editMyRsvp(){
   const f=document.getElementById('rsvp-form');f.style.opacity='0';f.style.display='block';f.style.transition='opacity .4s';requestAnimationFrame(()=>requestAnimationFrame(()=>f.style.opacity='1'));
 }
 function cancelRsvp(){
-  const n=getMyName();if(!n)return;
+  const n=getMyName();
+  const tok=getMyToken();
+  if(!n||!tok)return;
+  // Valida token + últimos 8 dígitos
+  const entry=getGuests().find(x=>x.name===n&&x.token===tok);
+  if(!entry){alert('Não foi possível verificar sua identidade. Por segurança, o cancelamento foi bloqueado.');return;}
+  const phone8=entry.phone?entry.phone.replace(/\D/g,'').slice(-8):'';
+  if(phone8){
+    const digitado=(prompt('Para cancelar sua confirmação, informe os últimos 8 dígitos do seu WhatsApp:')||'').replace(/\D/g,'').slice(-8);
+    if(digitado!==phone8){alert('Número incorreto. Cancelamento bloqueado por segurança.');return;}
+  }
   if(!confirm('Deseja cancelar sua confirmação de presença?'))return;
   let g=getGuests();
   const removed=g.find(x=>x.name===n);
@@ -489,6 +583,7 @@ function cancelRsvp(){
     sendToSheet({...removed,_action:'delete',_deletedAt:new Date().toLocaleString('pt-BR')});
   }
   localStorage.removeItem('elise_myname');
+  localStorage.removeItem('elise_token');
   localStorage.removeItem('elise_editing');
   // Limpa todos os campos
   ['gname','gphone','gmsg','gexact'].forEach(id=>{
