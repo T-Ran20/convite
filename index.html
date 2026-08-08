@@ -176,8 +176,11 @@ section.sec:last-child{border-bottom:none}
 /* PRESENTES */
 .wishlist-note{font-size:15px;font-weight:600;color:var(--textm);line-height:1.8;margin-bottom:16px;text-align:center}
 .wish-tags{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
-.tag{background:#fff;color:var(--rose);border:2px solid var(--rose-l);border-radius:var(--pill);padding:9px 18px;font-size:14px;font-weight:700;transition:all .2s;box-shadow:0 2px 8px rgba(181,65,90,.1)}
-.tag:hover{background:var(--rose);color:#fff;border-color:var(--rose)}
+.wish-list{list-style:none;display:flex;flex-direction:column;gap:10px}
+.wish-item{display:flex;align-items:center;gap:14px;padding:14px 18px;background:#fff;border-radius:14px;border-left:4px solid var(--rose-l);box-shadow:0 2px 10px rgba(181,65,90,.07);font-size:15px;font-weight:600;color:var(--textm)}
+.wish-item .wi-icon{font-size:22px;flex-shrink:0}
+.wish-item .wi-text{flex:1}
+.wish-item .wi-badge{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--rose);background:var(--rose-bg);border-radius:100px;padding:3px 10px;white-space:nowrap}
 
 /* COUNTDOWN */
 .cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--cream-d);border-radius:20px;overflow:hidden}
@@ -194,6 +197,9 @@ section.sec:last-child{border-bottom:none}
 /* FADE-IN */
 .fi{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
 .fi.vis{opacity:1;transform:none}
+/* ENVIO */
+.send-status{text-align:center;font-size:13px;font-weight:700;margin-top:10px;min-height:20px}
+@keyframes dotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}}
 
 @media(max-width:500px){
   .details-g{grid-template-columns:1fr}
@@ -275,21 +281,20 @@ section.sec:last-child{border-bottom:none}
     <!-- DETALHES -->
     <section class="sec fi">
       <p class="slabel">Detalhes do Evento</p>
-      <div class="details-g">
-        <div class="ditem"><div class="dicon">📅</div><p class="dlabel">Data</p><p class="dval">Sábado, 05 de Setembro</p><p class="dsub">2026</p></div>
-        <div class="ditem"><div class="dicon">🕖</div><p class="dlabel">Horário</p><p class="dval">A partir das 19h</p><p class="dsub">Chegue com carinho!</p></div>
-        <div class="ditem"><div class="dicon">👶</div><p class="dlabel">Traje</p><p class="dval">Rosa &amp; Florido</p><p class="dsub">Venha na temática!</p></div>
+      <div class="details-g" style="grid-template-columns:repeat(2,1fr)">
+        <div class="ditem"><div class="dicon">📅</div><p class="dlabel">Data</p><p class="dval">Domingo, 06 de Setembro</p><p class="dsub">2026</p></div>
+        <div class="ditem"><div class="dicon">🕖</div><p class="dlabel">Horário</p><p class="dval">às 19 horas</p><p class="dsub">Chegue com carinho!</p></div>
       </div>
-      <a class="local-card" href="https://maps.app.goo.gl/HEaUChnNkwtUr9Vw8" target="_blank" rel="noopener">
+      <a class="local-card" href="https://maps.app.goo.gl/tpSqtUK6svGv9QEC6" target="_blank" rel="noopener">
         <div class="local-pin">📍</div>
-        <div><div class="lname">Arena Yan Benício</div><div class="laddr">R. São José · Pindaré-Mirim — MA · 65370-000</div><span class="local-cta">Ver no Google Maps →</span></div>
+        <div><div class="lname">Clube dos Jovens</div><div class="laddr">R. da Redenção, 1 · Pindaré-Mirim — MA · 65370-000</div><span class="local-cta">Ver no Google Maps →</span></div>
       </a>
     </section>
 
     <!-- RSVP -->
     <section class="sec fi">
       <p class="slabel">Confirme sua Presença</p>
-      <p class="rsvp-hint">Confirme até 04 de Setembro de 2026 💕</p>
+      <p class="rsvp-hint">Confirme até 06 de Setembro de 2026 💕</p>
       <div id="rsvp-form">
         <div class="igroup"><label for="gname">Seu nome completo</label><input type="text" id="gname" placeholder="Somente letras e espaço" autocomplete="name"/><span class="ferr" id="err-name">Use apenas letras e espaços (mínimo 2 letras).</span></div>
         <div class="igroup"><label for="gphone">Seu WhatsApp</label><input type="tel" id="gphone" placeholder="Somente números, ex: 98999999999" inputmode="numeric"/><span class="ferr" id="err-phone">Use apenas números sem traços (mínimo 10 dígitos).</span></div>
@@ -312,18 +317,18 @@ section.sec:last-child{border-bottom:none}
 
     <!-- PRESENTES -->
     <section class="sec fi">
-      <p class="slabel">Lista de Presentes</p>
+      <p class="slabel">Sugestão de Presentes</p>
       <p class="wishlist-note">Sua presença já é o maior presente!<br/>Mas se quiser mimar a Elise, aqui vão algumas ideias:</p>
-      <div class="wish-tags">
-        <span class="tag">👶 Roupinhas 1 a 2 anos</span>
-        <span class="tag">🧸 Pelúcias</span>
-        <span class="tag">🌙 Naninha</span>
-        <span class="tag">🎵 Chocalhos</span>
-        <span class="tag">🎁 Vale-presente</span>
-        <span class="tag">🩹 Fralda G · Pampers</span>
-        <span class="tag">🩹 Fralda G · Huggies</span>
-        <span class="tag">🩹 Fralda G · MamyPoko</span>
-      </div>
+      <ul class="wish-list">
+        <li class="wish-item"><span class="wi-icon">👶</span><span class="wi-text">Roupinhas de 6 meses a 2 anos</span></li>
+        <li class="wish-item"><span class="wi-icon">🧸</span><span class="wi-text">Pelúcias e brinquedos</span></li>
+        <li class="wish-item"><span class="wi-icon">🌙</span><span class="wi-text">Naninha</span></li>
+        <li class="wish-item"><span class="wi-icon">🎵</span><span class="wi-text">Chocalhos</span></li>
+        <li class="wish-item"><span class="wi-icon">🎁</span><span class="wi-text">Vale-presente</span></li>
+        <li class="wish-item"><span class="wi-icon">🩹</span><span class="wi-text">Fraldas Pampers</span><span class="wi-badge">P · M · G · GG</span></li>
+        <li class="wish-item"><span class="wi-icon">🩹</span><span class="wi-text">Fraldas Huggies</span><span class="wi-badge">P · M · G · GG</span></li>
+        <li class="wish-item"><span class="wi-icon">🩹</span><span class="wi-text">Fraldas MamyPoko</span><span class="wi-badge">P · M · G · GG</span></li>
+      </ul>
     </section>
 
     <!-- COUNTDOWN -->
@@ -341,7 +346,6 @@ section.sec:last-child{border-bottom:none}
     <footer class="sec inv-footer fi">
       <p style="font-size:32px;margin-bottom:12px">🎀</p>
       <p class="ftxt">Feito com muito amor para a chegada de <em>Elise</em></p>
-      <p class="fsub">✨ Haverá lembrancinhas especiais para você!</p>
     </footer>
   </div>
 </main>
@@ -404,7 +408,7 @@ function startMusic(){if(musicOn)return;musicOn=true;playSong();document.getElem
 function toggleMusic(){if(musicOn){musicOn=false;clearTimeout(musicTimer);if(AC)AC.suspend();document.getElementById('eq').classList.remove('on');document.getElementById('music-lbl').textContent='🎵 Música pausada — clique para tocar'}else{if(AC)AC.resume();startMusic()}}
 
 /* COUNTDOWN */
-const ED=new Date('2026-09-05T19:00:00');
+const ED=new Date('2026-09-06T19:00:00');
 function pad(n){return String(n).padStart(2,'0')}
 function tick(){const d=ED-new Date();if(d<=0){['cdd','cdh','cdm','cds'].forEach(id=>document.getElementById(id).textContent='🎀');return}document.getElementById('cdd').textContent=pad(Math.floor(d/864e5));document.getElementById('cdh').textContent=pad(Math.floor(d%864e5/36e5));document.getElementById('cdm').textContent=pad(Math.floor(d%36e5/6e4));document.getElementById('cds').textContent=pad(Math.floor(d%6e4/1e3))}
 tick();setInterval(tick,1000);
@@ -418,7 +422,6 @@ function getCancelled(){return JSON.parse(localStorage.getItem(CKEY)||'[]')}
 function saveCancelled(c){localStorage.setItem(CKEY,JSON.stringify(c))}
 function getMyName(){return localStorage.getItem('elise_myname')||null}
 function getMyToken(){return localStorage.getItem('elise_token')||null}
-/* Gera token único de 32 chars aleatórios — salvo só no dispositivo de quem confirmou */
 function gerarToken(){
   const arr=new Uint8Array(16);
   crypto.getRandomValues(arr);
@@ -471,8 +474,7 @@ function onlyL(s){return/^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/.test(s)}
 function onlyN(s){return/^[0-9]+$/.test(s)}
 function setErr(inp,err,show,msg){document.getElementById(inp).classList.toggle('err',show);const e=document.getElementById(err);if(msg)e.textContent=msg;e.classList.toggle('show',show)}
 function checkAlreadyConfirmed(){
-  const n=getMyName();
-  const tok=getMyToken();
+  const n=getMyName();const tok=getMyToken();
   if(!n||!tok)return;
   const me=getGuests().find(g=>g.name===n&&g.token===tok);
   if(me)showSuccess(me);
@@ -509,9 +511,9 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     saveGuests(guests);localStorage.setItem('elise_myname',name);localStorage.removeItem('elise_editing');
     document.getElementById('btn-ok').textContent='Confirmar Presença 💕';
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
-    btn.disabled=true;st.textContent='Salvando… 🌸';
+    btn.disabled=true;st.innerHTML='<span style="display:inline-flex;align-items:center;gap:6px">Salvando suas alterações <span style="animation:dotPulse 1.2s infinite;display:inline-block">🌸</span></span>';st.style.color='var(--rose)';
     const res=await sendToSheet({...entry,_action:'edit',_origName:origName});
-    btn.disabled=false;st.textContent='';
+    btn.disabled=false;st.textContent='';st.style.color='';
     if(!res.ok){st.style.color='#C0392B';st.textContent='⚠️ Conexão instável — alteração salva localmente e será enviada quando a internet voltar.';setTimeout(()=>{st.textContent='';st.style.color=''},6000);}
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
     setTimeout(()=>{f.style.display='none';showSuccess(entry)},400);
@@ -523,11 +525,10 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     localStorage.setItem('elise_myname',name);
     localStorage.setItem('elise_token',token);
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
-    btn.disabled=true;st.textContent='Enviando… 🌸';
+    btn.disabled=true;st.innerHTML='<span style="display:inline-flex;align-items:center;gap:6px">Enviando sua confirmação <span style="animation:dotPulse 1.2s infinite;display:inline-block">🌸</span></span>';st.style.color='var(--rose)';
     const res=await sendToSheet({...entry,_action:'new'});
-    btn.disabled=false;st.textContent='';
+    btn.disabled=false;st.textContent='';st.style.color='';
     if(!res.ok){
-      // Avisa a convidada mas não bloqueia — dado já salvo localmente
       st.style.color='#C0392B';
       st.textContent='⚠️ Conexão instável — sua confirmação foi salva e será enviada automaticamente quando a internet voltar.';
       setTimeout(()=>{st.textContent='';st.style.color=''},6000);
@@ -538,10 +539,8 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
 });
 
 function editMyRsvp(){
-  const n=getMyName();
-  const tok=getMyToken();
+  const n=getMyName();const tok=getMyToken();
   if(!n||!tok)return;
-  // Valida token E últimos 8 dígitos do telefone
   const g=getGuests().find(x=>x.name===n&&x.token===tok);
   if(!g){alert('Não foi possível verificar sua identidade. Por segurança, a edição foi bloqueada.');return;}
   const phone8=g.phone?g.phone.replace(/\D/g,'').slice(-8):'';
@@ -560,10 +559,8 @@ function editMyRsvp(){
   const f=document.getElementById('rsvp-form');f.style.opacity='0';f.style.display='block';f.style.transition='opacity .4s';requestAnimationFrame(()=>requestAnimationFrame(()=>f.style.opacity='1'));
 }
 function cancelRsvp(){
-  const n=getMyName();
-  const tok=getMyToken();
+  const n=getMyName();const tok=getMyToken();
   if(!n||!tok)return;
-  // Valida token + últimos 8 dígitos
   const entry=getGuests().find(x=>x.name===n&&x.token===tok);
   if(!entry){alert('Não foi possível verificar sua identidade. Por segurança, o cancelamento foi bloqueado.');return;}
   const phone8=entry.phone?entry.phone.replace(/\D/g,'').slice(-8):'';
