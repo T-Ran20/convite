@@ -373,6 +373,11 @@ function openInvite(){
   invEl.classList.remove('hidden');
   invEl.style.cssText='opacity:0;transition:opacity .9s ease';
   requestAnimationFrame(()=>requestAnimationFrame(()=>invEl.style.opacity='1'));
+  // Se ficou editing=1 de uma sessão anterior sem salvar, limpa
+  if(localStorage.getItem('elise_editing')==='1'){
+    localStorage.removeItem('elise_editing');
+    document.getElementById('btn-ok').textContent='Confirmar Presença 💕';
+  }
   initObs();
   checkAlreadyConfirmed();
   startMusic();
@@ -455,7 +460,7 @@ async function sendToSheet(data,tentativas=0){
 }
 
 // Tenta reenviar confirmações pendentes (chama ao abrir a página)
-async function reenviarPendentes(){
+async async function reenviarPendentes(){
   const pending=JSON.parse(localStorage.getItem('elise_pending')||'[]');
   if(!pending.length)return;
   for(const item of pending){
@@ -475,8 +480,11 @@ function onlyN(s){return/^[0-9]+$/.test(s)}
 function setErr(inp,err,show,msg){document.getElementById(inp).classList.toggle('err',show);const e=document.getElementById(err);if(msg)e.textContent=msg;e.classList.toggle('show',show)}
 function checkAlreadyConfirmed(){
   const n=getMyName();const tok=getMyToken();
-  if(!n||!tok)return;
-  const me=getGuests().find(g=>g.name===n&&g.token===tok);
+  if(!n)return;
+  // Busca por nome + token (caso normal)
+  let me=tok?getGuests().find(g=>g.name===n&&g.token===tok):null;
+  // Fallback: confirmação anterior ao sistema de token (sem token no registro)
+  if(!me) me=getGuests().find(g=>g.name===n&&!g.token);
   if(me)showSuccess(me);
 }
 function showSuccess(g){document.getElementById('rsvp-form').style.display='none';document.getElementById('rsvp-ok').classList.add('show');const pax=Number(g.count);document.getElementById('smsg').textContent=`${g.name}, ficamos felizes! `+(pax===1?'Esperamos por você no evento 🌸':`Esperamos por ${pax} pessoas no evento 🌸`)+(g.msg?' Seu recadinho chegou com muito carinho 💕':'')}
@@ -512,7 +520,8 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     document.getElementById('btn-ok').textContent='Confirmar Presença 💕';
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
     btn.disabled=true;st.innerHTML='<span style="display:inline-flex;align-items:center;gap:6px">Salvando suas alterações <span style="animation:dotPulse 1.2s infinite;display:inline-block">🌸</span></span>';st.style.color='var(--rose)';
-    const res=await sendToSheet({...entry,_action:'edit',_origName:origName});
+    let res={ok:false};
+    try{ res=await sendToSheet({...entry,_action:'edit',_origName:origName,token:entry.token}); }catch(e){}
     btn.disabled=false;st.textContent='';st.style.color='';
     if(!res.ok){st.style.color='#C0392B';st.textContent='⚠️ Conexão instável — alteração salva localmente e será enviada quando a internet voltar.';setTimeout(()=>{st.textContent='';st.style.color=''},6000);}
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
@@ -526,7 +535,8 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     localStorage.setItem('elise_token',token);
     const btn=document.getElementById('btn-ok');const st=document.getElementById('send-st');
     btn.disabled=true;st.innerHTML='<span style="display:inline-flex;align-items:center;gap:6px">Enviando sua confirmação <span style="animation:dotPulse 1.2s infinite;display:inline-block">🌸</span></span>';st.style.color='var(--rose)';
-    const res=await sendToSheet({...entry,_action:'new'});
+    let res={ok:false};
+    try{ res=await sendToSheet({...entry,_action:'new',token:entry.token}); }catch(e){}
     btn.disabled=false;st.textContent='';st.style.color='';
     if(!res.ok){
       st.style.color='#C0392B';
@@ -551,7 +561,11 @@ function editMyRsvp(){
   document.getElementById('gmsg').value=g.msg||'';
   document.getElementById('btn-ok').textContent='Salvar alterações 💕';
   document.getElementById('rsvp-ok').classList.remove('show');
-  const f=document.getElementById('rsvp-form');f.style.opacity='0';f.style.display='block';f.style.transition='opacity .4s';requestAnimationFrame(()=>requestAnimationFrame(()=>f.style.opacity='1'));
+  const f=document.getElementById('rsvp-form');
+  f.style.display='block';
+  f.style.opacity='0';
+  f.style.transition='opacity .4s';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ f.style.opacity='1'; }));
 }
 function cancelRsvp(){
   const n=getMyName();const tok=getMyToken();
@@ -567,7 +581,7 @@ function cancelRsvp(){
     const cancelled=getCancelled();
     cancelled.push({...removed,cancelledAt:new Date().toLocaleString('pt-BR')});
     saveCancelled(cancelled);
-    sendToSheet({...removed,_action:'delete',_deletedAt:new Date().toLocaleString('pt-BR')});
+    sendToSheet({...removed,_action:'delete',_deletedAt:new Date().toLocaleString('pt-BR'),token:removed.token||getMyToken()});
   }
   localStorage.removeItem('elise_myname');
   localStorage.removeItem('elise_token');
