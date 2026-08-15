@@ -460,7 +460,7 @@ async function sendToSheet(data,tentativas=0){
 }
 
 // Tenta reenviar confirmações pendentes (chama ao abrir a página)
-async async function reenviarPendentes(){
+async function reenviarPendentes(){
   const pending=JSON.parse(localStorage.getItem('elise_pending')||'[]');
   if(!pending.length)return;
   for(const item of pending){
@@ -471,6 +471,23 @@ async async function reenviarPendentes(){
       localStorage.setItem('elise_pending',JSON.stringify(atual.filter(x=>x._savedAt!==item._savedAt)));
     }
   }
+}
+
+/* HELPERS — mostrar/esconder form sem conflito de display+opacity */
+function showForm(){
+  const ok=document.getElementById('rsvp-ok');
+  const f=document.getElementById('rsvp-form');
+  if(ok) ok.classList.remove('show');
+  f.style.display='block';
+  f.style.opacity='0';
+  f.style.transition='opacity .4s';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ f.style.opacity='1'; }));
+}
+function hideFormShowSuccess(entry){
+  const f=document.getElementById('rsvp-form');
+  f.style.transition='opacity .4s';
+  f.style.opacity='0';
+  setTimeout(()=>{ f.style.display='none'; showSuccess(entry); }, 400);
 }
 
 /* RSVP */
