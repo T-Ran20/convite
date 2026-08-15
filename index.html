@@ -428,13 +428,13 @@ function saveCancelled(c){localStorage.setItem(CKEY,JSON.stringify(c))}
 function getMyName(){return localStorage.getItem('elise_myname')||null}
 function getMyToken(){return localStorage.getItem('elise_token')||null}
 function gerarToken(){
-  const arr=new Uint8Array(16);
+  const arr=new Uint8Array(6);
   crypto.getRandomValues(arr);
   return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 const SHEET_URL='https://script.google.com/macros/s/AKfycbxOtqHa5EXwsWCguaytONfL52Mt5W2a90eOzN8dl0VZT8PZ60-wbLHta-8CjgFq-6HL/exec';
 async function sendToSheet(data,tentativas=0){
-  const MAX=3,ESPERA=3000;
+  const MAX=2,ESPERA=1500;
   try{
     // Envia via GET com dados em JSON na URL — permite ler a resposta (sem bloqueio CORS)
     const params=new URLSearchParams({payload:JSON.stringify(data)});
@@ -544,7 +544,14 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
     setTimeout(()=>{f.style.display='none';showSuccess(entry)},400);
   }else{
-    if(guests.find(g=>g.name.toLowerCase()===name.toLowerCase())){alert('Você já confirmou presença! 🌸');return}
+    // Bloqueia só se nome E telefone já existem (mesma pessoa)
+    // Permite homônimos com telefone diferente
+    const foneNormalizado=phone.replace(/\D/g,'');
+    const jaExiste=guests.find(g=>
+      g.name.toLowerCase()===name.toLowerCase() &&
+      g.phone.replace(/\D/g,'')===foneNormalizado
+    );
+    if(jaExiste){alert('Você já confirmou presença! 🌸');return}
     const token=gerarToken();
     const entry={name,phone,count:pax,msg,time:new Date().toLocaleString('pt-BR'),edited:false,token};
     guests.push(entry);saveGuests(guests);
