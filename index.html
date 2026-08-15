@@ -4,6 +4,25 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Chá de Bebê · Elise Aldrin</title>
+
+<!-- ═══ Open Graph — pré-visualização no WhatsApp, Instagram, etc. ═══ -->
+<meta property="og:type"        content="website"/>
+<meta property="og:title"       content="🎀 Chá de Bebê · Elise Aldrin"/>
+<meta property="og:description" content="Você está convidada! 06 de Setembro de 2026 · às 19h · Pindaré-Mirim MA. Confirme sua presença 🌸"/>
+<meta property="og:image"       content="https://elisealdrin.github.io/convite/og-image.jpg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height"content="630"/>
+<meta property="og:locale"      content="pt_BR"/>
+<meta property="og:url"         content="https://elisealdrin.github.io/convite/"/>
+
+<!-- Twitter/X Card -->
+<meta name="twitter:card"        content="summary_large_image"/>
+<meta name="twitter:title"       content="🎀 Chá de Bebê · Elise Aldrin"/>
+<meta name="twitter:description" content="Você está convidada! 06 de Setembro de 2026 · às 19h · Pindaré-Mirim MA. Confirme sua presença 🌸"/>
+<meta name="twitter:image"       content="https://elisealdrin.github.io/convite/og-image.jpg"/>
+
+<!-- WhatsApp usa og:image — precisa ser URL pública, não base64 -->
+<meta name="description" content="Você está convidada para o Chá de Bebê da Elise Aldrin! 06 de Setembro de 2026 · às 19h · Pindaré-Mirim MA."/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Nunito:wght@400;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -544,14 +563,15 @@ document.getElementById('btn-ok').addEventListener('click',async()=>{
     const f=document.getElementById('rsvp-form');f.style.transition='opacity .4s';f.style.opacity='0';
     setTimeout(()=>{f.style.display='none';showSuccess(entry)},400);
   }else{
-    // Bloqueia só se nome E telefone já existem (mesma pessoa)
-    // Permite homônimos com telefone diferente
+    // Bloqueia se: mesmo nome+fone (mesma pessoa) OU mesmo fone com nome diferente (tentativa de duplicar)
     const foneNormalizado=phone.replace(/\D/g,'');
-    const jaExiste=guests.find(g=>
+    const mesmaPessoa=guests.find(g=>
       g.name.toLowerCase()===name.toLowerCase() &&
       g.phone.replace(/\D/g,'')===foneNormalizado
     );
-    if(jaExiste){alert('Você já confirmou presença! 🌸');return}
+    if(mesmaPessoa){alert('Você já confirmou presença! 🌸');return}
+    const mesmoFone=foneNormalizado&&guests.find(g=>g.phone.replace(/\D/g,'')===foneNormalizado);
+    if(mesmoFone){alert('Este número de WhatsApp já foi usado para confirmar presença. Cada número só pode confirmar uma vez.');return}
     const token=gerarToken();
     const entry={name,phone,count:pax,msg,time:new Date().toLocaleString('pt-BR'),edited:false,token};
     guests.push(entry);saveGuests(guests);
